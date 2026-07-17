@@ -1,0 +1,31 @@
+name: Monthly Pub Fund Newsletter
+
+on:
+  schedule:
+    # Every Sunday at 08:00 UTC = 09:00 BST (UK summer time)
+    # The script guards to only execute on the first Sunday of the month
+    - cron: "0 8 * * 0"
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  send-newsletter:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run newsletter script
+        env:
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS }}
+        run: python main.py
