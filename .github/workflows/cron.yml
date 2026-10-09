@@ -1,9 +1,9 @@
-name: Monthly Pub Fund Newsletter
+name: Pub Fund Newsletter
 
 on:
   schedule:
     # Every Sunday at 08:00 UTC = 09:00 BST (UK summer time)
-    # The script guards to only execute on the first Sunday of the month
+    # The script guards to only send every other Sunday
     - cron: "0 8 * * 0"
   workflow_dispatch: # Allows manual trigger from GitHub UI
 

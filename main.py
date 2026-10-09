@@ -6,7 +6,7 @@ import pandas as pd
 import yfinance as yf
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime
+from datetime import datetime, date
 
 # --- Configuration ---
 PUBLISHED_BASE_URL = (
@@ -275,14 +275,14 @@ def build_full_email(holdings_html, watchlist_html):
 <div class="container">
   <div class="header">
     <h1>🍺 The Pub Fund</h1>
-    <p>Weekly Market Update &nbsp;·&nbsp; {date_str}</p>
+    <p>Bi-Weekly Market Update &nbsp;·&nbsp; {date_str}</p>
   </div>
   <div class="content">
     {holdings_html}
     {watchlist_html}
   </div>
   <div class="footer">
-    Cheers 🍺 &nbsp;·&nbsp; Data via Yahoo Finance &nbsp;·&nbsp; Delivered every Friday morning
+    Cheers 🍺 &nbsp;·&nbsp; Data via Yahoo Finance &nbsp;·&nbsp; Delivered every other Sunday morning
   </div>
 </div>
 </body>
@@ -293,7 +293,7 @@ def build_full_email(holdings_html, watchlist_html):
 
 def send_email(html_content):
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"🍺 The Pub Fund — Weekly Update {datetime.now().strftime('%d %b %Y')}"
+    msg["Subject"] = f"🍺 The Pub Fund — Update {datetime.now().strftime('%d %b %Y')}"
     msg["From"] = SENDER_EMAIL
     msg["To"] = SENDER_EMAIL  # Sender sees their own address in To:
     msg["Bcc"] = ", ".join(RECIPIENT_EMAILS)  # All recipients hidden from each other
@@ -312,14 +312,15 @@ def send_email(html_content):
 # --- Entry Point ---
 
 def main():
-    # Monthly guard: only run on the first Sunday of the month.
+    # Bi-weekly guard: only send every other Sunday, anchored to the
+    # requested start date (Sunday 19 July 2026). Runs exactly every 14 days.
     # workflow_dispatch (manual trigger) bypasses this automatically
     # because GitHub sets GITHUB_EVENT_NAME=workflow_dispatch.
     event = os.environ.get("GITHUB_EVENT_NAME", "")
     today = datetime.now()
-    is_first_sunday = today.weekday() == 6 and today.day <= 7
-    if event == "schedule" and not is_first_sunday:
-        print(f"⏭️  Skipping: {today.strftime('%A %d %b')} is not the first Sunday of the month.")
+    days_since_start = (today.date() - date(2026, 7, 19)).days
+    if event == "schedule" and days_since_start % 14 != 0:
+        print(f"⏭️  Skipping: {today.strftime('%A %d %b')} is an off week.")
         sys.exit(0)
 
     print("📥 Fetching Holdings from Google Sheets...")
